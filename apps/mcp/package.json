@@ -26,21 +26,21 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.8.56",
-    "@cloudflare/workers-types": "^4.20250724.0",
-    "@types/node": "^24.1.0",
-    "@typescript-eslint/eslint-plugin": "^8.38.0",
-    "@typescript-eslint/parser": "^8.38.0",
-    "@vitest/coverage-v8": "^3.2.4",
-    "@vitest/runner": "^3.2.4",
-    "@vitest/snapshot": "^3.2.4",
-    "@vitest/ui": "^3.2.4",
-    "eslint": "^9.31.0",
-    "prettier": "^3.6.2",
+    "@cloudflare/vitest-pool-workers": "^0.10.11",
+    "@cloudflare/workers-types": "^4.20251128.0",
+    "@types/node": "^24.10.1",
+    "@typescript-eslint/eslint-plugin": "^8.48.0",
+    "@typescript-eslint/parser": "^8.48.0",
+    "@vitest/coverage-v8": "^4.0.14",
+    "@vitest/runner": "^4.0.14",
+    "@vitest/snapshot": "^4.0.14",
+    "@vitest/ui": "^4.0.14",
+    "eslint": "^9.39.1",
+    "prettier": "^3.7.3",
     "react": "^19.0.0",
-    "typescript": "^5.6.3",
-    "vitest": "^3.2.4",
-    "wrangler": "^4.25.1"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.14",
+    "wrangler": "^4.51.0"
   },
   "engines": {
     "node": ">=18"
