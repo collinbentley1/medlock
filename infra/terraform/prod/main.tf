@@ -12,6 +12,11 @@ locals {
   firestore_collection = var.waitlist_collection
 }
 
+import {
+  to = google_firestore_database.waitlist
+  id = "projects/medlock-1025243085/databases/(default)"
+}
+
 resource "google_artifact_registry_repository" "site" {
   #checkov:skip=CKV_GCP_84:Google-managed encryption is sufficient for public open-source container images.
   project       = var.project_id
