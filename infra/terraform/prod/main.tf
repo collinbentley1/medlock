@@ -1,231 +1,76 @@
-data "google_project" "current" {
-  project_id = var.project_id
-}
+module "site" {
+  source = "github.com/collinbentley1/platform//terraform/modules/cloud-run-service?ref=v0.1.2"
 
-locals {
-  labels = {
-    app        = "medlock"
-    managed-by = "terraform"
+  providers = {
+    google                = google
+    google.no_attribution = google.no_attribution
   }
 
-  custom_domains       = toset(var.custom_domains)
-  firestore_collection = var.waitlist_collection
-}
+  app                                  = "medlock"
+  project_id                           = var.project_id
+  region                               = var.region
+  service_name                         = var.service_name
+  artifact_registry_repository_id      = var.artifact_registry_repository_id
+  artifact_registry_description        = "Container images for Medlock."
+  bootstrap_image                      = var.bootstrap_image
+  runtime_service_account_email        = var.runtime_service_account_email
+  prod_deploy_service_account_email    = var.prod_deploy_service_account_email
+  preview_deploy_service_account_email = var.preview_deploy_service_account_email
+  custom_domains                       = var.custom_domains
 
-import {
-  to = google_firestore_database.waitlist
-  id = "projects/medlock-1025243085/databases/(default)"
-}
-
-resource "google_artifact_registry_repository" "site" {
-  #checkov:skip=CKV_GCP_84:Google-managed encryption is sufficient for public open-source container images.
-  project       = var.project_id
-  location      = var.region
-  repository_id = var.artifact_registry_repository_id
-  description   = "Container images for Medlock."
-  format        = "DOCKER"
-
-  docker_config {
-    immutable_tags = true
+  container_env = {
+    ALLOWED_HOSTS    = join(",", var.allowed_hosts)
+    ALLOWED_ORIGINS  = join(",", var.allowed_origins)
+    CANONICAL_HOST   = var.canonical_host
+    LEGACY_HOSTS     = join(",", var.legacy_hosts)
+    MEDLOCK_VERSION  = var.app_version
+    WAITLIST_BACKEND = "firestore"
   }
 
-  cleanup_policy_dry_run = false
-
-  cleanup_policies {
-    id     = "delete-pr-images-after-30-days"
-    action = "DELETE"
-
-    condition {
-      older_than   = "2592000s"
-      tag_prefixes = ["pr-"]
-      tag_state    = "TAGGED"
-    }
+  firestore_database = {
+    name                         = var.firestore_database_id
+    location_id                  = var.firestore_location_id
+    runtime_collection_env_name  = "FIRESTORE_COLLECTION"
+    runtime_collection_env_value = var.waitlist_collection
   }
-
-  cleanup_policies {
-    id     = "keep-recent-images"
-    action = "KEEP"
-
-    most_recent_versions {
-      keep_count = 30
-    }
-  }
-
-  labels = local.labels
 }
 
-resource "google_artifact_registry_repository_iam_member" "prod_deploy_writer" {
-  project    = var.project_id
-  location   = google_artifact_registry_repository.site.location
-  repository = google_artifact_registry_repository.site.repository_id
-  role       = "roles/artifactregistry.writer"
-  member     = "serviceAccount:${var.prod_deploy_service_account_email}"
+moved {
+  from = google_artifact_registry_repository.site
+  to   = module.site.google_artifact_registry_repository.site
 }
 
-resource "google_artifact_registry_repository_iam_member" "preview_deploy_writer" {
-  project    = var.project_id
-  location   = google_artifact_registry_repository.site.location
-  repository = google_artifact_registry_repository.site.repository_id
-  role       = "roles/artifactregistry.writer"
-  member     = "serviceAccount:${var.preview_deploy_service_account_email}"
+moved {
+  from = google_artifact_registry_repository_iam_member.prod_deploy_writer
+  to   = module.site.google_artifact_registry_repository_iam_member.prod_deploy_writer
 }
 
-resource "google_artifact_registry_repository_iam_member" "runtime_reader" {
-  project    = var.project_id
-  location   = google_artifact_registry_repository.site.location
-  repository = google_artifact_registry_repository.site.repository_id
-  role       = "roles/artifactregistry.reader"
-  member     = "serviceAccount:${var.runtime_service_account_email}"
+moved {
+  from = google_artifact_registry_repository_iam_member.preview_deploy_writer
+  to   = module.site.google_artifact_registry_repository_iam_member.preview_deploy_writer
 }
 
-resource "google_firestore_database" "waitlist" {
-  project                           = var.project_id
-  name                              = var.firestore_database_id
-  location_id                       = var.firestore_location_id
-  type                              = "FIRESTORE_NATIVE"
-  concurrency_mode                  = "OPTIMISTIC"
-  app_engine_integration_mode       = "DISABLED"
-  point_in_time_recovery_enablement = "POINT_IN_TIME_RECOVERY_DISABLED"
-  delete_protection_state           = "DELETE_PROTECTION_ENABLED"
+moved {
+  from = google_artifact_registry_repository_iam_member.runtime_reader
+  to   = module.site.google_artifact_registry_repository_iam_member.runtime_reader
 }
 
-resource "google_project_iam_member" "runtime_firestore_user" {
-  project = var.project_id
-  role    = "roles/datastore.user"
-  member  = "serviceAccount:${var.runtime_service_account_email}"
+moved {
+  from = google_firestore_database.waitlist
+  to   = module.site.google_firestore_database.firestore[0]
 }
 
-resource "google_cloud_run_v2_service" "site" {
-  project              = var.project_id
-  name                 = var.service_name
-  location             = var.region
-  client               = "terraform"
-  deletion_protection  = true
-  ingress              = "INGRESS_TRAFFIC_ALL"
-  invoker_iam_disabled = true
-  labels               = local.labels
-
-  template {
-    service_account                  = var.runtime_service_account_email
-    timeout                          = "300s"
-    max_instance_request_concurrency = 80
-
-    scaling {
-      max_instance_count = 10
-      min_instance_count = 0
-    }
-
-    containers {
-      name  = "site"
-      image = var.bootstrap_image
-
-      ports {
-        container_port = 8080
-        name           = "http1"
-      }
-
-      env {
-        name  = "ALLOWED_HOSTS"
-        value = join(",", var.allowed_hosts)
-      }
-
-      env {
-        name  = "ALLOWED_ORIGINS"
-        value = join(",", var.allowed_origins)
-      }
-
-      env {
-        name  = "CANONICAL_HOST"
-        value = var.canonical_host
-      }
-
-      env {
-        name  = "LEGACY_HOSTS"
-        value = join(",", var.legacy_hosts)
-      }
-
-      env {
-        name  = "MEDLOCK_VERSION"
-        value = var.app_version
-      }
-
-      env {
-        name  = "FIRESTORE_COLLECTION"
-        value = local.firestore_collection
-      }
-
-      env {
-        name  = "FIRESTORE_DATABASE_ID"
-        value = google_firestore_database.waitlist.name
-      }
-
-      env {
-        name  = "FIRESTORE_PROJECT_ID"
-        value = var.project_id
-      }
-
-      env {
-        name  = "WAITLIST_BACKEND"
-        value = "firestore"
-      }
-
-      resources {
-        limits = {
-          cpu    = "1"
-          memory = "512Mi"
-        }
-
-        cpu_idle          = true
-        startup_cpu_boost = true
-      }
-    }
-  }
-
-  traffic {
-    percent = 100
-    type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
-  }
-
-  lifecycle {
-    ignore_changes = [
-      client,
-      client_version,
-      labels,
-      template[0].labels,
-      template[0].containers[0].image,
-    ]
-  }
-
-  depends_on = [
-    google_artifact_registry_repository.site,
-    google_artifact_registry_repository_iam_member.runtime_reader,
-    google_project_iam_member.runtime_firestore_user,
-  ]
+moved {
+  from = google_project_iam_member.runtime_firestore_user
+  to   = module.site.google_project_iam_member.runtime_firestore_user[0]
 }
 
-resource "google_cloud_run_domain_mapping" "site" {
-  for_each = local.custom_domains
-  provider = google.no_attribution
+moved {
+  from = google_cloud_run_v2_service.site
+  to   = module.site.google_cloud_run_v2_service.site
+}
 
-  project  = var.project_id
-  location = var.region
-  name     = each.value
-
-  metadata {
-    namespace = var.project_id
-  }
-
-  spec {
-    route_name = google_cloud_run_v2_service.site.name
-  }
-
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes = [
-      metadata[0].annotations,
-      metadata[0].labels,
-      spec[0].certificate_mode,
-      spec[0].force_override,
-    ]
-  }
+moved {
+  from = google_cloud_run_domain_mapping.site
+  to   = module.site.google_cloud_run_domain_mapping.site
 }
