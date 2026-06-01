@@ -1,157 +1,81 @@
 # Medlock
 
-Privacy-preserving health data platform using Model Context Protocol (MCP).
+Medlock is a pure Bun app that serves a frontend site and a Model Context Protocol server over Streamable HTTP.
 
-## What is Medlock?
+The public deployment returns deterministic demo vitals. Private deployments can connect the same MCP tool surface to a user's Solid Pod and should configure bearer auth before exposing real data.
 
-Medlock enables AI models to interact with your personal health data stored in Solid Pods. You maintain full control while leveraging AI insights.
+## Stack
 
-### Key Features
+- Bun for the HTTP server, static site build, tests, and tooling
+- `@modelcontextprotocol/server` with `WebStandardStreamableHTTPServerTransport`
+- Cloud Run for production and pull request previews
+- Terraform for Google Cloud resources
+- GitHub Actions OIDC for GitOps deployment
 
-- **Privacy First**: Your health data stays in your Solid Pod
-- **AI Integration**: Works with ChatGPT, Claude, and other MCP-compatible models
-- **Time-Limited Access**: 60-second signed URLs for data security
-- **Comprehensive Audit Logs**: Track every data access
-- **GitHub OAuth**: Secure authentication
+## Local Development
 
-## Architecture
-
-```
-apps/
-├── web/          # Marketing site (Next.js on Cloudflare Workers)
-└── mcp/          # MCP server (Hono on Cloudflare Workers)
+```sh
+bun install
+bun run dev
 ```
 
-## Quick Start
+Useful commands:
 
-### Prerequisites
-
-- Node.js 20+
-- Yarn 4
-- Cloudflare account
-- GitHub OAuth app
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/medlock-ai/medlock.git
-cd medlock
-
-# Install dependencies
-yarn install
+```sh
+bun run test
+bun run typecheck
+bun run verify
+bun run mcp:inspect
 ```
 
-### Cloudflare Setup
+The MCP endpoint is available at:
 
-1. **Authenticate**: `wrangler login`
-
-2. **Create KV namespaces**:
-
-```bash
-# MCP server
-cd apps/mcp
-wrangler kv namespace create TOKENS
-wrangler kv namespace create AUDIT
-
-# Web app
-cd ../web
-wrangler kv namespace create WAITLIST_KV
+```text
+http://localhost:3000/api/mcp
 ```
 
-3. **Update configs** with your KV IDs and domain:
+## MCP Surface
 
-- `apps/mcp/wrangler.production.jsonc`
-- `apps/web/wrangler.production.jsonc`
+Tools:
 
-4. **Configure DNS** (Cloudflare Dashboard):
+- `solid_fetch_vitals`: returns selected read-only vitals from the demo Solid Pod data source
+- `vitals_scan`: prepares a browser scan handoff URL without activating camera hardware from the server
 
-- `@` → your-worker.workers.dev (CNAME, proxied)
-- `api` → your-mcp-worker.workers.dev (CNAME, proxied)
+Resource:
 
-5. **Create GitHub OAuth App** ([github.com/settings/developers](https://github.com/settings/developers)):
+- `medlock://context`: deployment and safety context for MCP clients
 
-- Homepage: `https://your-domain.com`
-- Callback: `https://mcp.your-domain.com/auth/callback`
+## Configuration
 
-6. **Generate secure signing key**:
+Environment variables:
 
-```bash
-# Generate a cryptographically secure 256-bit key (Solid spec recommendation)
-openssl rand -base64 32
-```
+- `ALLOWED_HOSTS`: comma-separated hosts accepted by the MCP endpoint
+- `ALLOWED_ORIGINS`: comma-separated browser origins accepted by API endpoints
+- `CANONICAL_HOST`: canonical host used for legacy redirects, default `medlock.ai`
+- `DATA_DIR`: local filesystem storage for development waitlist entries
+- `LEGACY_HOSTS`: comma-separated hosts redirected to `CANONICAL_HOST`
+- `MEDLOCK_MCP_TOKEN`: optional bearer token for private MCP deployments
+- `PORT`: HTTP port, default `3000`
+- `PUBLIC_DIR`: static asset directory override
+- `WAITLIST_BUCKET`: Google Cloud Storage bucket used by Cloud Run for waitlist records
 
-7. **Set secrets**:
+## Cloud Run Setup
 
-```bash
-cd apps/mcp
-# For production environment (top-level)
-wrangler secret put OAUTH_CLIENT_ID --env=""
-wrangler secret put OAUTH_CLIENT_SECRET --env=""
-wrangler secret put SOLID_SIGNING_KEY --env=""  # Use the key from step 6
+The repo follows the same shape as `collinbentley1/cdbentley`:
 
-# For staging environment (if needed)
-wrangler secret put OAUTH_CLIENT_ID --env=staging
-wrangler secret put OAUTH_CLIENT_SECRET --env=staging
-wrangler secret put SOLID_SIGNING_KEY --env=staging
-```
+- `infra/terraform/bootstrap`: project services, Terraform state bucket, GitHub OIDC, and service accounts
+- `infra/terraform/prod`: Artifact Registry, Cloud Run, waitlist bucket, and custom domain mappings
+- `.github/workflows/application.yml`: Bun verification
+- `.github/workflows/infrastructure.yml`: Terraform validation and production apply
+- `.github/workflows/deploy-prod.yml`: main branch container deployment
+- `.github/workflows/deploy-preview.yml`: pull request preview deployments
 
-8. **Configure allowed origins** in `wrangler.production.jsonc`:
+Production expects the GitHub repository variables emitted by bootstrap outputs:
 
-```jsonc
-"ALLOWED_ORIGINS": "https://your-domain.com,https://chat.openai.com,https://claude.ai"
-```
+- `GCP_WORKLOAD_IDENTITY_PROVIDER`
+- `GCP_TERRAFORM_SERVICE_ACCOUNT`
+- `GCP_PROD_DEPLOY_SERVICE_ACCOUNT`
+- `GCP_PREVIEW_DEPLOY_SERVICE_ACCOUNT`
+- `GCP_RUNTIME_SERVICE_ACCOUNT`
 
-### Development
-
-```bash
-# Run MCP server
-cd apps/mcp
-yarn dev
-
-# Run web app
-cd apps/web
-yarn dev
-```
-
-### Deployment
-
-**GitHub Actions** (recommended):
-
-1. **Generate Cloudflare API Token**:
-   - Log in to [Cloudflare dashboard](https://dash.cloudflare.com)
-   - Go to "My Profile" → "API Tokens" → "Create Token"
-   - Select "Edit Cloudflare Workers" template → "Use template"
-   - Scope to your account and zones as needed
-   - Create token and copy the value
-
-2. **Add repository secrets** (Settings → Secrets → Actions):
-   - `CLOUDFLARE_API_TOKEN` - Your API token from step 1
-   - `OAUTH_CLIENT_ID` - GitHub OAuth app client ID
-   - `OAUTH_CLIENT_SECRET` - GitHub OAuth app client secret
-   - `SOLID_SIGNING_KEY` - Your generated signing key
-
-3. **Push to main branch** - GitHub Actions will deploy automatically
-
-**Local deployment**:
-
-```bash
-# Build and deploy MCP server
-cd apps/mcp && wrangler deploy -c wrangler.production.jsonc
-
-# Build and deploy web app
-cd apps/web && yarn deploy
-```
-
-## MCP Tools
-
-- `solid_fetch_vitals`: Retrieve vital signs from Solid Pod
-- `vitals_scan`: Analyze health trends and provide insights
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## License
-
-MIT - see [LICENSE](LICENSE)
+The Dockerfile uses Docker Hardened Images, so repository secrets `DHI_USERNAME` and `DHI_ACCESS_TOKEN` are also required for GitHub Actions deploy jobs.

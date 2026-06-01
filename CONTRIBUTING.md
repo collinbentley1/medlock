@@ -1,48 +1,20 @@
-# Contributing to Medlock
+# Contributing
 
-We welcome contributions to Medlock.
+Medlock uses Bun for application code, tests, formatting, and build tooling.
 
-## Getting Started
+## Setup
 
-1. Fork the repository
-2. Clone your fork
-3. Create a feature branch
-4. Make your changes
-5. Submit a pull request
-
-## Development Setup
-
-```bash
-yarn install
-yarn dev
+```sh
+bun install
+bun run hooks:install
 ```
 
-## Code Style
+## Checks
 
-- TypeScript for all new code
-- Prettier for formatting
-- ESLint for linting
+Run the same verification used by CI:
 
-Run checks:
-
-```bash
-yarn lint
-yarn format
+```sh
+bun run verify
 ```
 
-## Testing
-
-```bash
-yarn test
-```
-
-## Pull Request Process
-
-1. Update documentation
-2. Add tests for new features
-3. Ensure all tests pass
-4. Update the README if needed
-
-## Code of Conduct
-
-Be respectful and inclusive.
+Changes that alter the MCP protocol surface should include a Bun test that connects through `@modelcontextprotocol/client` using Streamable HTTP.

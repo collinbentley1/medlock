@@ -1,32 +1,37 @@
 version: 2
 updates:
-  - package-ecosystem: 'npm'
-    directory: '/'
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: 'weekly'
-      day: 'monday'
-      time: '04:00'
-    open-pull-requests-limit: 10
-    target-branch: 'main'
-    labels:
-      - 'dependencies'
-      - 'automerge'
-    groups:
-      development-dependencies:
-        dependency-type: 'development'
-        patterns:
-          - '*'
-      production-dependencies:
-        dependency-type: 'production'
-        patterns:
-          - '*'
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 2
 
-  - package-ecosystem: 'github-actions'
-    directory: '/'
+  - package-ecosystem: bun
+    directory: /
     schedule:
-      interval: 'weekly'
-      day: 'monday'
-      time: '04:00'
-    labels:
-      - 'github-actions'
-      - 'automerge'
+      interval: weekly
+      day: monday
+      time: "09:05"
+      timezone: America/New_York
+    open-pull-requests-limit: 2
+
+  - package-ecosystem: terraform
+    directory: /infra/terraform/bootstrap
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:15"
+      timezone: America/New_York
+    open-pull-requests-limit: 2
+
+  - package-ecosystem: terraform
+    directory: /infra/terraform/prod
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:30"
+      timezone: America/New_York
+    open-pull-requests-limit: 2

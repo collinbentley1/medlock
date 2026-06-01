@@ -1,0 +1,29 @@
+output "artifact_registry_repository" {
+  description = "Artifact Registry Docker repository."
+  value       = "${google_artifact_registry_repository.site.location}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.site.repository_id}"
+}
+
+output "cloud_run_domain_mappings" {
+  description = "Production Cloud Run custom domain mappings and DNS records."
+  value = {
+    for domain, mapping in google_cloud_run_domain_mapping.site : domain => {
+      conditions       = try(mapping.status[0].conditions, [])
+      resource_records = try(mapping.status[0].resource_records, [])
+    }
+  }
+}
+
+output "cloud_run_service_name" {
+  description = "Production Cloud Run service name."
+  value       = google_cloud_run_v2_service.site.name
+}
+
+output "cloud_run_service_uri" {
+  description = "Production Cloud Run service URL."
+  value       = google_cloud_run_v2_service.site.uri
+}
+
+output "waitlist_bucket" {
+  description = "Cloud Storage bucket used for waitlist records."
+  value       = google_storage_bucket.waitlist.name
+}

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Medlock is a Streamable HTTP MCP server for privacy-preserving personal health data access."
+    />
+    <title>Medlock</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/assets/styles.css" />
+    <script type="module" src="/assets/client.js"></script>
+  </head>
+  <body>
+    <header class="topbar" aria-label="Primary">
+      <a class="brand" href="/" aria-label="Medlock home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>Medlock</span>
+      </a>
+      <nav class="nav" aria-label="Sections">
+        <a href="#mcp">MCP</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#waitlist">Waitlist</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow">Streamable HTTP MCP for personal health data</p>
+          <h1 id="hero-title">Medlock</h1>
+          <p class="lede">
+            A clean MCP surface for asking AI tools to read user-approved vitals without handing the model a permanent
+            copy of the pod.
+          </p>
+          <div class="actions">
+            <a class="button primary" href="#waitlist">Join waitlist</a>
+            <a class="button secondary" href="/api/mcp">MCP endpoint</a>
+          </div>
+        </div>
+
+        <div class="endpoint-panel" id="mcp" aria-label="MCP endpoint summary">
+          <div class="panel-header">
+            <span class="panel-title">/api/mcp</span>
+            <span class="status-pill" data-endpoint-status data-state="pending">Checking...</span>
+          </div>
+          <div class="flow-diagram" aria-hidden="true">
+            <div class="node">Solid Pod</div>
+            <div class="connector"></div>
+            <div class="node active">Medlock</div>
+            <div class="connector"></div>
+            <div class="node">AI Client</div>
+          </div>
+          <dl class="facts">
+            <div>
+              <dt>Transport</dt>
+              <dd>Streamable HTTP</dd>
+            </div>
+            <div>
+              <dt>Runtime</dt>
+              <dd>Bun on Cloud Run</dd>
+            </div>
+            <div>
+              <dt>Tools</dt>
+              <dd>solid_fetch_vitals, vitals_scan</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="band" id="privacy" aria-labelledby="privacy-title">
+        <div class="section-copy">
+          <p class="eyebrow">Built for consent boundaries</p>
+          <h2 id="privacy-title">The server is a permissioned read layer, not a health-data warehouse.</h2>
+        </div>
+        <div class="principles">
+          <article>
+            <h3>Pod first</h3>
+            <p>Data access is shaped around a Solid Pod integration, with demo data in the public deployment.</p>
+          </article>
+          <article>
+            <h3>Read-only tools</h3>
+            <p>MCP annotations mark health reads and scan preparation as non-destructive.</p>
+          </article>
+          <article>
+            <h3>Minimal surface</h3>
+            <p>No Wrangler, no Next runtime, no tracking scripts, and no third-party frontend assets.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="waitlist" id="waitlist" aria-labelledby="waitlist-title">
+        <div class="section-copy">
+          <p class="eyebrow">Early access</p>
+          <h2 id="waitlist-title">Get notified when private pod connections are ready.</h2>
+        </div>
+        <form class="waitlist-form" data-waitlist-form>
+          <label for="email">Email</label>
+          <div class="input-row">
+            <input id="email" data-waitlist-email name="email" type="email" autocomplete="email" required />
+            <button type="submit">Join</button>
+          </div>
+          <p class="form-status" data-waitlist-status aria-live="polite"></p>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

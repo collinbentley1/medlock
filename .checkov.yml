@@ -1,0 +1,10 @@
+compact: true
+quiet: true
+download-external-modules: false
+framework:
+  - terraform
+  - github_actions
+skip-path:
+  - .terraform
+  - outputs
+  - work
