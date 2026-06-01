@@ -1,0 +1,9 @@
+{
+  "name": "medlock",
+  "projectId": "medlock-1025243085",
+  "region": "us-east4",
+  "serviceName": "medlock",
+  "artifactRegistryRepository": "site",
+  "platformVersion": "v0.1.2",
+  "runtimeConfigScript": ".github/platform/runtime-config.sh"
+}
