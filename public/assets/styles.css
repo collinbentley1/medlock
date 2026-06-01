@@ -116,10 +116,15 @@ p {
 }
 
 h1 {
-  font-size: clamp(56px, 10vw, 116px);
+  font-size: clamp(38px, 4.2vw, 54px);
   letter-spacing: 0;
-  line-height: 0.88;
+  line-height: 1.05;
   margin-bottom: 28px;
+  max-width: 780px;
+}
+
+h1 span {
+  display: block;
 }
 
 h2 {
@@ -319,6 +324,63 @@ h3 {
   line-height: 1.55;
 }
 
+.quote-band {
+  border-top: 1px solid var(--line);
+  margin: 0 auto;
+  max-width: 1160px;
+  padding: 74px 24px;
+  text-align: center;
+}
+
+.quote-band blockquote {
+  color: var(--muted);
+  font-size: clamp(20px, 3vw, 30px);
+  font-style: italic;
+  line-height: 1.4;
+  margin: 0 auto;
+  max-width: 860px;
+}
+
+.quote-band p {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  margin: 16px 0 0;
+}
+
+.checkmark {
+  border: 2px solid var(--accent);
+  border-radius: 999px;
+  height: 40px;
+  margin: 0 auto 20px;
+  position: relative;
+  width: 40px;
+}
+
+.checkmark::after {
+  border-bottom: 3px solid var(--accent);
+  border-left: 3px solid var(--accent);
+  content: "";
+  height: 9px;
+  left: 10px;
+  position: absolute;
+  top: 11px;
+  transform: rotate(-45deg);
+  width: 17px;
+}
+
+.sr-only {
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
 .waitlist {
   display: grid;
   gap: 34px;
@@ -373,6 +435,21 @@ h3 {
 
 .form-status[data-state="success"] {
   color: var(--accent-strong);
+}
+
+.fine-print {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.footer {
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  margin: 0 auto;
+  max-width: 1160px;
+  padding: 28px 24px 42px;
+  text-align: center;
 }
 
 .scan-page {

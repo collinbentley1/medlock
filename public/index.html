@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Medlock is a Streamable HTTP MCP server for privacy-preserving personal health data access."
+      content="Medlock lets you unlock AI insights without unlocking your private health data."
     />
     <title>Medlock</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/assets/styles.css" />
-    <script type="module" src="/assets/client.js"></script>
+    <link rel="stylesheet" href="/assets/styles.css?v=2" />
+    <script type="module" src="/assets/client.js?v=2"></script>
   </head>
   <body>
     <header class="topbar" aria-label="Primary">
@@ -28,14 +28,18 @@
     <main>
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-copy">
-          <p class="eyebrow">Streamable HTTP MCP for personal health data</p>
-          <h1 id="hero-title">Medlock</h1>
+          <p class="eyebrow">Private health data, user-approved AI context</p>
+          <h1 id="hero-title">
+            <span>Unlock AI insights</span>
+            <span>without unlocking</span>
+            <span>your private health data</span>
+          </h1>
           <p class="lede">
-            A clean MCP surface for asking AI tools to read user-approved vitals without handing the model a permanent
-            copy of the pod.
+            Medlock lets you team up your favorite model with your health records on your terms. There is no good reason
+            to hand any company permanent, all-access rights to your most personal story.
           </p>
           <div class="actions">
-            <a class="button primary" href="#waitlist">Join waitlist</a>
+            <a class="button primary" href="#waitlist">Reserve My Pod</a>
             <a class="button secondary" href="/api/mcp">MCP endpoint</a>
           </div>
         </div>
@@ -71,39 +75,60 @@
 
       <section class="band" id="privacy" aria-labelledby="privacy-title">
         <div class="section-copy">
-          <p class="eyebrow">Built for consent boundaries</p>
-          <h2 id="privacy-title">The server is a permissioned read layer, not a health-data warehouse.</h2>
+          <p class="eyebrow">How it works</p>
+          <h2 id="privacy-title">Bring your data, keep your privacy.</h2>
         </div>
         <div class="principles">
           <article>
-            <h3>Pod first</h3>
-            <p>Data access is shaped around a Solid Pod integration, with demo data in the public deployment.</p>
+            <h3>1 · Keep It Yours</h3>
+            <p>
+              Drop every metric, from steps to meds to labs, into a Solid Pod encrypted with your keys. Medlock never
+              stores a copy, and nothing moves unless you say so.
+            </p>
           </article>
           <article>
-            <h3>Read-only tools</h3>
-            <p>MCP annotations mark health reads and scan preparation as non-destructive.</p>
+            <h3>2 · Share Precisely</h3>
+            <p>
+              One chat request becomes one short-lived, signed link. Approve automatically, ask each time, or revoke in
+              one tap.
+            </p>
           </article>
           <article>
-            <h3>Minimal surface</h3>
-            <p>No Wrangler, no Next runtime, no tracking scripts, and no third-party frontend assets.</p>
+            <h3>3 · Enjoy the Edge</h3>
+            <p>
+              Your model gets the context it needs to coach, predict, and inspire, with zero long-term custody of your
+              life&apos;s data.
+            </p>
           </article>
         </div>
+      </section>
+
+      <section class="quote-band" aria-labelledby="proof-title">
+        <div class="checkmark" aria-hidden="true"></div>
+        <h2 id="proof-title" class="sr-only">Early access result</h2>
+        <blockquote>
+          I let ChatGPT compare my marathon training logs and sleep data, then got tweaks that shaved 4 minutes off my
+          10 K, yet everything stayed in my pod.
+        </blockquote>
+        <p>Early-access runner #12</p>
       </section>
 
       <section class="waitlist" id="waitlist" aria-labelledby="waitlist-title">
         <div class="section-copy">
           <p class="eyebrow">Early access</p>
-          <h2 id="waitlist-title">Get notified when private pod connections are ready.</h2>
+          <h2 id="waitlist-title">Beta opens soon. Bring your data, keep your privacy.</h2>
         </div>
         <form class="waitlist-form" data-waitlist-form>
           <label for="email">Email</label>
           <div class="input-row">
-            <input id="email" data-waitlist-email name="email" type="email" autocomplete="email" required />
-            <button type="submit">Join</button>
+            <input id="email" data-waitlist-email name="email" type="email" autocomplete="email" placeholder="you@example.com" required />
+            <button type="submit">Request Invite</button>
           </div>
           <p class="form-status" data-waitlist-status aria-live="polite"></p>
+          <p class="fine-print">No spam, no hidden trackers, no fine print. Ever.</p>
         </form>
       </section>
     </main>
+    <footer class="footer">Medlock · Your data, your decisions.</footer>
   </body>
 </html>

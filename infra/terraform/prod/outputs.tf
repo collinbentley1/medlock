@@ -23,7 +23,12 @@ output "cloud_run_service_uri" {
   value       = google_cloud_run_v2_service.site.uri
 }
 
-output "waitlist_bucket" {
-  description = "Cloud Storage bucket used for waitlist records."
-  value       = google_storage_bucket.waitlist.name
+output "firestore_database" {
+  description = "Firestore database used for waitlist records."
+  value       = google_firestore_database.waitlist.name
+}
+
+output "waitlist_collection" {
+  description = "Firestore collection used for production waitlist records."
+  value       = var.waitlist_collection
 }

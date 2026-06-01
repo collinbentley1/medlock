@@ -81,7 +81,7 @@ export function corsHeaders(request: Request, config: RuntimeConfig): Headers {
   const headers = new Headers();
   const origin = normalizeOrigin(request.headers.get("origin"));
 
-  if (origin && config.allowedOrigins.includes(origin)) {
+  if (origin && matchesOrigin(origin, config.allowedOrigins)) {
     headers.set("Access-Control-Allow-Origin", origin);
     headers.set("Vary", "Origin");
   }
@@ -109,10 +109,38 @@ export function withCors(response: Response, request: Request, config: RuntimeCo
 export function isTrustedHost(request: Request, config: RuntimeConfig): boolean {
   const url = new URL(request.url);
   const host = hostNameFromHeader(request.headers.get("host")) || url.hostname.toLowerCase();
-  return config.allowedHosts.includes(host);
+  return matchesHost(host, config.allowedHosts);
 }
 
 export function isTrustedOrigin(request: Request, config: RuntimeConfig): boolean {
   const origin = normalizeOrigin(request.headers.get("origin"));
-  return !origin || config.allowedOrigins.includes(origin);
+  return !origin || matchesOrigin(origin, config.allowedOrigins);
+}
+
+function matchesHost(host: string, patterns: readonly string[]): boolean {
+  return patterns.some((pattern) => {
+    if (pattern.startsWith("*.")) {
+      return host.endsWith(pattern.slice(1));
+    }
+
+    return host === pattern;
+  });
+}
+
+function matchesOrigin(origin: string, patterns: readonly string[]): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(origin);
+  } catch {
+    return false;
+  }
+
+  return patterns.some((pattern) => {
+    if (pattern.includes("*.")) {
+      const patternUrl = new URL(pattern.replace("*.", "wildcard."));
+      return parsed.protocol === patternUrl.protocol && matchesHost(parsed.hostname, [patternUrl.hostname.replace("wildcard.", "*.")]);
+    }
+
+    return origin === pattern;
+  });
 }

@@ -9,6 +9,7 @@ variable "allowed_hosts" {
     "www.healthmcp.ai",
     "healthmcp.app",
     "www.healthmcp.app",
+    "*.run.app",
   ]
 }
 
@@ -21,6 +22,7 @@ variable "allowed_origins" {
     "https://mcp.medlock.ai",
     "https://chat.openai.com",
     "https://claude.ai",
+    "https://*.run.app",
   ]
 }
 
@@ -60,6 +62,18 @@ variable "custom_domains" {
     "healthmcp.app",
     "www.healthmcp.app",
   ]
+}
+
+variable "firestore_database_id" {
+  description = "Firestore database ID used for waitlist records."
+  type        = string
+  default     = "(default)"
+}
+
+variable "firestore_location_id" {
+  description = "Firestore location ID."
+  type        = string
+  default     = "nam5"
 }
 
 variable "legacy_hosts" {
@@ -109,8 +123,8 @@ variable "service_name" {
   default     = "medlock"
 }
 
-variable "waitlist_bucket_location" {
-  description = "Cloud Storage location for waitlist records."
+variable "waitlist_collection" {
+  description = "Firestore collection used for production waitlist records."
   type        = string
-  default     = "US-EAST4"
+  default     = "waitlist"
 }

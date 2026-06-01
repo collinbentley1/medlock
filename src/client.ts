@@ -34,7 +34,7 @@ form?.addEventListener("submit", async (event) => {
     }
 
     emailInput.value = "";
-    setStatus(body.duplicate ? "You are already on the list." : "You are on the list.", "success");
+    setStatus(body.duplicate ? "You're already on the waitlist." : "You're on the list. We'll email you when beta opens.", "success");
   } catch {
     setStatus("Unable to join right now.", "error");
   }

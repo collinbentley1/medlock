@@ -11,6 +11,7 @@ locals {
   required_services = toset([
     "artifactregistry.googleapis.com",
     "cloudresourcemanager.googleapis.com",
+    "firestore.googleapis.com",
     "iam.googleapis.com",
     "iamcredentials.googleapis.com",
     "run.googleapis.com",
@@ -180,6 +181,7 @@ resource "google_project_iam_member" "terraform_project_roles" {
   for_each = toset([
     "roles/artifactregistry.admin",
     "roles/browser",
+    "roles/datastore.owner",
     "roles/run.admin",
     "roles/serviceusage.serviceUsageAdmin",
     "roles/storage.admin",

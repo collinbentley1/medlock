@@ -24,7 +24,7 @@ const CONTENT_TYPES: Readonly<Record<string, string>> = {
 
 export function createHandler(dependencies: ServerDependencies = {}): (request: Request) => Promise<Response> {
   const config = dependencies.config ?? getRuntimeConfig();
-  const waitlistStore = dependencies.waitlistStore ?? createWaitlistStore(config.dataDir, config.waitlistBucket);
+  const waitlistStore = dependencies.waitlistStore ?? createWaitlistStore(config);
   const rateLimiter = dependencies.rateLimiter ?? new InMemoryRateLimiter();
   const mcpEndpoint = dependencies.mcpEndpoint ?? createMcpEndpoint(config);
   const now = dependencies.now ?? (() => new Date());

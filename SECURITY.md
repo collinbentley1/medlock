@@ -10,7 +10,8 @@ Do not open public issues for security reports. Use GitHub private vulnerability
 - Private deployments should set `MEDLOCK_MCP_TOKEN` before connecting real Solid Pod data.
 - The MCP endpoint validates allowed hosts and origins.
 - Tool results are read-only and avoid server-triggered camera access.
-- The waitlist stores contact emails in a private Cloud Storage bucket when `WAITLIST_BUCKET` is configured.
+- The waitlist stores production contact records in Firestore through the Bun API when `WAITLIST_BACKEND=firestore`.
+- Pull request previews set `WAITLIST_BACKEND=memory`, so preview signups are ephemeral and do not write to production Firestore.
 - Error responses do not include stack traces.
 
 ## Supported Versions

@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import type { RuntimeConfig } from "./config.ts";
 
 export type WaitlistEntry = {
   readonly createdAt: string;
@@ -15,6 +16,8 @@ export type WaitlistStore = {
   get(emailHash: string): Promise<WaitlistEntry | undefined>;
   put(entry: WaitlistEntry): Promise<void>;
 };
+
+export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
 export type WaitlistSubmission = {
   readonly email: string;
@@ -98,18 +101,22 @@ export class FileWaitlistStore implements WaitlistStore {
   }
 }
 
-export class GcsWaitlistStore implements WaitlistStore {
-  readonly #bucket: string;
-  readonly #fetch: typeof fetch;
+export class FirestoreWaitlistStore implements WaitlistStore {
+  readonly #collection: string;
+  readonly #databaseId: string;
+  readonly #fetch: FetchLike;
+  readonly #projectId: string;
   #token: { readonly accessToken: string; readonly expiresAt: number } | undefined;
 
-  constructor(bucket: string, fetcher: typeof fetch = fetch) {
-    this.#bucket = bucket;
-    this.#fetch = fetcher;
+  constructor(options: { collection: string; databaseId: string; fetcher?: FetchLike; projectId: string }) {
+    this.#collection = options.collection;
+    this.#databaseId = options.databaseId;
+    this.#fetch = options.fetcher ?? fetch;
+    this.#projectId = options.projectId;
   }
 
   async get(emailHash: string): Promise<WaitlistEntry | undefined> {
-    const response = await this.#fetch(this.#objectUrl(emailHash, true), {
+    const response = await this.#fetch(this.#documentUrl(emailHash), {
       headers: await this.#headers(),
     });
 
@@ -118,15 +125,15 @@ export class GcsWaitlistStore implements WaitlistStore {
     }
 
     if (!response.ok) {
-      throw new Error(`GCS waitlist read failed: ${response.status}`);
+      throw new Error(`Firestore waitlist read failed: ${response.status}`);
     }
 
-    return (await response.json()) as WaitlistEntry;
+    return fromFirestoreDocument(await response.json());
   }
 
   async put(entry: WaitlistEntry): Promise<void> {
-    const response = await this.#fetch(this.#uploadUrl(entry.emailHash), {
-      body: `${JSON.stringify(entry, null, 2)}\n`,
+    const response = await this.#fetch(this.#collectionUrl(entry.emailHash), {
+      body: JSON.stringify(toFirestoreDocument(entry)),
       headers: {
         ...(await this.#headers()),
         "Content-Type": "application/json; charset=utf-8",
@@ -139,7 +146,7 @@ export class GcsWaitlistStore implements WaitlistStore {
     }
 
     if (!response.ok) {
-      throw new Error(`GCS waitlist write failed: ${response.status}`);
+      throw new Error(`Firestore waitlist write failed: ${response.status}`);
     }
   }
 
@@ -170,28 +177,37 @@ export class GcsWaitlistStore implements WaitlistStore {
     return token.access_token;
   }
 
-  #objectUrl(emailHash: string, media: boolean): string {
-    const name = encodeURIComponent(this.#objectName(emailHash));
-    const alt = media ? "?alt=media" : "";
-    return `https://storage.googleapis.com/storage/v1/b/${this.#bucket}/o/${name}${alt}`;
+  #documentUrl(emailHash: string): string {
+    return `${this.#documentsBaseUrl()}/${encodePathSegment(this.#collection)}/${encodePathSegment(emailHash)}`;
   }
 
-  #uploadUrl(emailHash: string): string {
-    const name = encodeURIComponent(this.#objectName(emailHash));
-    return `https://storage.googleapis.com/upload/storage/v1/b/${this.#bucket}/o?uploadType=media&ifGenerationMatch=0&name=${name}`;
+  #collectionUrl(emailHash: string): string {
+    return `${this.#documentsBaseUrl()}/${encodePathSegment(this.#collection)}?documentId=${encodeURIComponent(emailHash)}`;
   }
 
-  #objectName(emailHash: string): string {
-    return `waitlist/${emailHash}.json`;
+  #documentsBaseUrl(): string {
+    return `https://firestore.googleapis.com/v1/projects/${this.#projectId}/databases/${encodePathSegment(this.#databaseId)}/documents`;
   }
 }
 
-export function createWaitlistStore(dataDir: string, waitlistBucket?: string): WaitlistStore {
-  if (waitlistBucket) {
-    return new GcsWaitlistStore(waitlistBucket);
+export function createWaitlistStore(config: RuntimeConfig): WaitlistStore {
+  if (config.waitlistBackend === "memory") {
+    return new MemoryWaitlistStore();
   }
 
-  return new FileWaitlistStore(dataDir);
+  if (config.waitlistBackend === "firestore") {
+    if (!config.firestoreProjectId) {
+      throw new Error("FIRESTORE_PROJECT_ID or GOOGLE_CLOUD_PROJECT is required when WAITLIST_BACKEND=firestore.");
+    }
+
+    return new FirestoreWaitlistStore({
+      collection: config.firestoreCollection,
+      databaseId: config.firestoreDatabaseId,
+      projectId: config.firestoreProjectId,
+    });
+  }
+
+  return new FileWaitlistStore(config.dataDir);
 }
 
 export function sha256(value: string): string {
@@ -209,4 +225,59 @@ function isValidEmail(email: string): boolean {
 function sanitizeSource(value: string | undefined): string {
   const source = value?.trim() || "site";
   return source.replace(/[^a-zA-Z0-9_.:-]/g, "").slice(0, 60) || "site";
+}
+
+type FirestoreDocument = {
+  readonly fields?: Record<string, FirestoreValue>;
+};
+
+type FirestoreValue =
+  | { readonly integerValue: string }
+  | { readonly stringValue: string }
+  | { readonly timestampValue: string };
+
+function toFirestoreDocument(entry: WaitlistEntry): FirestoreDocument {
+  return {
+    fields: {
+      createdAt: { timestampValue: entry.createdAt },
+      email: { stringValue: entry.email },
+      emailHash: { stringValue: entry.emailHash },
+      ipHash: { stringValue: entry.ipHash },
+      source: { stringValue: entry.source },
+      userAgentHash: { stringValue: entry.userAgentHash },
+    },
+  };
+}
+
+function fromFirestoreDocument(document: FirestoreDocument): WaitlistEntry {
+  const fields = document.fields ?? {};
+
+  return {
+    createdAt: readString(fields.createdAt),
+    email: readString(fields.email),
+    emailHash: readString(fields.emailHash),
+    ipHash: readString(fields.ipHash),
+    source: readString(fields.source),
+    userAgentHash: readString(fields.userAgentHash),
+  };
+}
+
+function readString(value: FirestoreValue | undefined): string {
+  if (!value) {
+    return "";
+  }
+
+  if ("stringValue" in value) {
+    return value.stringValue;
+  }
+
+  if ("timestampValue" in value) {
+    return value.timestampValue;
+  }
+
+  return value.integerValue;
+}
+
+function encodePathSegment(segment: string): string {
+  return encodeURIComponent(segment).replaceAll("%28", "(").replaceAll("%29", ")");
 }

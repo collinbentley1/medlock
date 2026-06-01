@@ -8,7 +8,8 @@ locals {
     managed-by = "terraform"
   }
 
-  custom_domains = toset(var.custom_domains)
+  custom_domains       = toset(var.custom_domains)
+  firestore_collection = var.waitlist_collection
 }
 
 resource "google_artifact_registry_repository" "site" {
@@ -72,39 +73,21 @@ resource "google_artifact_registry_repository_iam_member" "runtime_reader" {
   member     = "serviceAccount:${var.runtime_service_account_email}"
 }
 
-resource "google_storage_bucket" "waitlist" {
-  #checkov:skip=CKV_GCP_62:Waitlist entries are low-volume user-submitted contact records; Cloud Audit Logs cover administrative access.
-  name                        = "${var.project_id}-waitlist-${data.google_project.current.number}"
-  project                     = var.project_id
-  location                    = var.waitlist_bucket_location
-  uniform_bucket_level_access = true
-  public_access_prevention    = "enforced"
-  force_destroy               = false
-
-  versioning {
-    enabled = true
-  }
-
-  lifecycle_rule {
-    action {
-      type = "Delete"
-    }
-
-    condition {
-      age                   = 365
-      matches_storage_class = ["STANDARD"]
-    }
-  }
-
-  labels = merge(local.labels, {
-    purpose = "waitlist"
-  })
+resource "google_firestore_database" "waitlist" {
+  project                           = var.project_id
+  name                              = var.firestore_database_id
+  location_id                       = var.firestore_location_id
+  type                              = "FIRESTORE_NATIVE"
+  concurrency_mode                  = "OPTIMISTIC"
+  app_engine_integration_mode       = "DISABLED"
+  point_in_time_recovery_enablement = "POINT_IN_TIME_RECOVERY_DISABLED"
+  delete_protection_state           = "DELETE_PROTECTION_ENABLED"
 }
 
-resource "google_storage_bucket_iam_member" "runtime_waitlist_object_admin" {
-  bucket = google_storage_bucket.waitlist.name
-  role   = "roles/storage.objectAdmin"
-  member = "serviceAccount:${var.runtime_service_account_email}"
+resource "google_project_iam_member" "runtime_firestore_user" {
+  project = var.project_id
+  role    = "roles/datastore.user"
+  member  = "serviceAccount:${var.runtime_service_account_email}"
 }
 
 resource "google_cloud_run_v2_service" "site" {
@@ -162,8 +145,23 @@ resource "google_cloud_run_v2_service" "site" {
       }
 
       env {
-        name  = "WAITLIST_BUCKET"
-        value = google_storage_bucket.waitlist.name
+        name  = "FIRESTORE_COLLECTION"
+        value = local.firestore_collection
+      }
+
+      env {
+        name  = "FIRESTORE_DATABASE_ID"
+        value = google_firestore_database.waitlist.name
+      }
+
+      env {
+        name  = "FIRESTORE_PROJECT_ID"
+        value = var.project_id
+      }
+
+      env {
+        name  = "WAITLIST_BACKEND"
+        value = "firestore"
       }
 
       resources {
@@ -194,7 +192,7 @@ resource "google_cloud_run_v2_service" "site" {
   depends_on = [
     google_artifact_registry_repository.site,
     google_artifact_registry_repository_iam_member.runtime_reader,
-    google_storage_bucket_iam_member.runtime_waitlist_object_admin,
+    google_project_iam_member.runtime_firestore_user,
   ]
 }
 

@@ -94,6 +94,7 @@ jobs:
             --cpu=1
             --concurrency=80
             --timeout=300s
+            --set-env-vars=WAITLIST_BACKEND=memory,MEDLOCK_VERSION=preview-pr-${{ github.event.pull_request.number }}
             --labels=managed-by=github-actions,environment=preview,pr=${{ github.event.pull_request.number }}
 
       - name: Comment preview URL

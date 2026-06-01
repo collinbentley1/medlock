@@ -52,19 +52,22 @@ Environment variables:
 - `ALLOWED_HOSTS`: comma-separated hosts accepted by the MCP endpoint
 - `ALLOWED_ORIGINS`: comma-separated browser origins accepted by API endpoints
 - `CANONICAL_HOST`: canonical host used for legacy redirects, default `medlock.ai`
-- `DATA_DIR`: local filesystem storage for development waitlist entries
+- `DATA_DIR`: local filesystem storage for development waitlist entries when `WAITLIST_BACKEND=file`
+- `FIRESTORE_COLLECTION`: Firestore collection for waitlist records, default `waitlist`
+- `FIRESTORE_DATABASE_ID`: Firestore database ID, default `(default)`
+- `FIRESTORE_PROJECT_ID`: project used by the Firestore REST API; Cloud Run also sets `GOOGLE_CLOUD_PROJECT`
 - `LEGACY_HOSTS`: comma-separated hosts redirected to `CANONICAL_HOST`
 - `MEDLOCK_MCP_TOKEN`: optional bearer token for private MCP deployments
 - `PORT`: HTTP port, default `3000`
 - `PUBLIC_DIR`: static asset directory override
-- `WAITLIST_BUCKET`: Google Cloud Storage bucket used by Cloud Run for waitlist records
+- `WAITLIST_BACKEND`: `file`, `memory`, or `firestore`; production uses `firestore`, pull request previews use `memory`
 
 ## Cloud Run Setup
 
 The repo follows the same shape as `collinbentley1/cdbentley`:
 
 - `infra/terraform/bootstrap`: project services, Terraform state bucket, GitHub OIDC, and service accounts
-- `infra/terraform/prod`: Artifact Registry, Cloud Run, waitlist bucket, and custom domain mappings
+- `infra/terraform/prod`: Artifact Registry, Firestore, Cloud Run, and custom domain mappings
 - `.github/workflows/application.yml`: Bun verification
 - `.github/workflows/infrastructure.yml`: Terraform validation and production apply
 - `.github/workflows/deploy-prod.yml`: main branch container deployment

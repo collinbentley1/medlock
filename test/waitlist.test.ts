@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { MemoryWaitlistStore, normalizeEmail, submitWaitlist } from "../src/waitlist.ts";
+import { FirestoreWaitlistStore, MemoryWaitlistStore, normalizeEmail, submitWaitlist, type FetchLike } from "../src/waitlist.ts";
 
 describe("waitlist", () => {
   test("normalizes and stores a valid email once", async () => {
@@ -42,5 +42,44 @@ describe("waitlist", () => {
 
   test("normalizes email casing consistently", () => {
     expect(normalizeEmail(" Collin@Example.Com ")).toBe("collin@example.com");
+  });
+
+  test("can write waitlist entries through Firestore REST", async () => {
+    const requestedUrls: string[] = [];
+    const fetcher: FetchLike = async (input, init) => {
+      const url = String(input);
+      requestedUrls.push(url);
+
+      if (url.includes("metadata.google.internal")) {
+        return Response.json({ access_token: "token", expires_in: 3600 });
+      }
+
+      if (init?.method === "POST") {
+        expect(init.headers).toMatchObject({ Authorization: "Bearer token" });
+        return Response.json({ name: "stored" });
+      }
+
+      return Response.json({ error: { status: "NOT_FOUND" } }, { status: 404 });
+    };
+    const store = new FirestoreWaitlistStore({
+      collection: "waitlist_preview_12",
+      databaseId: "(default)",
+      fetcher,
+      projectId: "medlock-1025243085",
+    });
+
+    const result = await submitWaitlist(
+      store,
+      {
+        email: "firestore@example.com",
+        ipAddress: "203.0.113.55",
+      },
+      new Date("2026-06-01T12:00:00.000Z"),
+    );
+
+    expect(result.ok).toBe(true);
+    expect(requestedUrls.some((url) => url.includes("/projects/medlock-1025243085/databases/(default)/documents/waitlist_preview_12"))).toBe(
+      true,
+    );
   });
 });
