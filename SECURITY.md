@@ -1,40 +1,21 @@
 # Security Policy
 
-## Reporting Security Vulnerabilities
+## Reporting
 
-We take security seriously. If you discover a security vulnerability, please:
+Do not open public issues for security reports. Use GitHub private vulnerability reporting on this repository and include impact, reproduction steps, and any suggested mitigation.
 
-1. **DO NOT** open a public issue
-2. Use GitHub's private vulnerability reporting:
-   - Navigate to the [Security tab](https://github.com/medlock-ai/medlock/security)
-   - Click "Report a vulnerability"
-   - Provide detailed information about the vulnerability
+## Current Security Model
 
-### What to include:
-
-- Description of the vulnerability
-- Steps to reproduce
-- Potential impact
-- Suggested fix (if available)
-
-## Response Time
-
-We aim to:
-
-- Acknowledge reports within 48 hours
-- Provide an initial assessment within 5 business days
-- Release patches for critical vulnerabilities within 30 days
+- The public MCP deployment serves demo data only.
+- Private deployments should set `MEDLOCK_MCP_TOKEN` before connecting real Solid Pod data.
+- The MCP endpoint validates allowed hosts and origins.
+- Tool results are read-only and avoid server-triggered camera access.
+- The waitlist stores production contact records in Firestore through the Bun API when `WAITLIST_BACKEND=firestore`.
+- Pull request previews set `WAITLIST_BACKEND=memory`, so preview signups are ephemeral and do not write to production Firestore.
+- Error responses do not include stack traces.
 
 ## Supported Versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 0.1.x   | :white_check_mark: |
-
-## Security Measures
-
-- OAuth 2.0 with PKCE
-- Time-limited signed URLs (60 seconds)
-- Comprehensive audit logging
-- Rate limiting via Durable Objects
-- No storage of health data
+| Version | Supported |
+| --- | --- |
+| 0.2.x | Yes |
