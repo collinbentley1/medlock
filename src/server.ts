@@ -38,7 +38,7 @@ export function createHandler(dependencies: ServerDependencies = {}): (request: 
     const url = new URL(request.url);
 
     try {
-      if (url.pathname === "/healthz") {
+      if (url.pathname === "/healthz" || url.pathname === "/api/healthz") {
         return json({
           ok: true,
           service: "medlock",

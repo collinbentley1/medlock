@@ -46,7 +46,7 @@ async function refreshEndpointStatus(): Promise<void> {
   }
 
   try {
-    const response = await fetch("/healthz");
+    const response = await fetch("/api/healthz");
     const body = (await response.json()) as { ok?: boolean; transport?: string };
 
     endpointStatus.textContent = body.ok ? `Online: ${body.transport ?? "streamable-http"}` : "Unavailable";

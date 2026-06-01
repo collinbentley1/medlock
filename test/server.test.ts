@@ -16,12 +16,18 @@ const config = getRuntimeConfig({
 
 describe("server", () => {
   test("serves healthz", async () => {
-    const response = await createHandler({ config })(new Request("http://localhost/healthz"));
+    const handler = createHandler({ config });
+    const response = await handler(new Request("http://localhost/healthz"));
+    const apiResponse = await handler(new Request("http://localhost/api/healthz"));
     const body = await response.json();
+    const apiBody = await apiResponse.json();
 
     expect(response.status).toBe(200);
+    expect(apiResponse.status).toBe(200);
     expect(body.ok).toBe(true);
+    expect(apiBody.ok).toBe(true);
     expect(body.transport).toBe("streamable-http");
+    expect(apiBody.transport).toBe("streamable-http");
   });
 
   test("serves static homepage and favicon", async () => {

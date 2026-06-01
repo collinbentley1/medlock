@@ -1,6 +1,9 @@
-FROM dhi.io/bun:1-dev@sha256:672095ec6bf67688dad9b0830c6a8c2df66ab71c6e8ba22fb9b879c8fef03492 AS deps
+FROM dhi.io/bun:1-dev@sha256:67209598b7e7db266ae5630f9b27662d3a80b0915615bbcb9f703f562c5b5a52 AS deps
 
 WORKDIR /app
+RUN apt-get update \
+  && apt-get install --no-install-recommends -y unzip \
+  && rm -rf /var/lib/apt/lists/*
 RUN bun upgrade --canary
 COPY package.json bunfig.toml ./
 RUN bun install
@@ -10,7 +13,7 @@ WORKDIR /app
 COPY . .
 RUN bun run verify:ci
 
-FROM dhi.io/bun:1@sha256:3f3b49bc429654f9aa20b8d4421a7a45d2f62c2c69eae8e6f099fb063420d39d AS runtime
+FROM dhi.io/bun:1@sha256:3f3bcd8aeebefe5a4477ad5cd3a1a0154213c028f63a4d6ea84eeafe5dc69a38 AS runtime
 
 ENV NODE_ENV=production \
   PORT=8080 \
