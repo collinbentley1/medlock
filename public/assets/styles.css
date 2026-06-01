@@ -212,18 +212,6 @@ h3 {
   text-align: center;
 }
 
-.status-pill[data-state="online"] {
-  background: #e8f5ef;
-  border-color: #b5dacd;
-  color: var(--accent-strong);
-}
-
-.status-pill[data-state="offline"] {
-  background: #fae9e6;
-  border-color: #f1c1ba;
-  color: var(--error);
-}
-
 .flow-diagram {
   align-items: center;
   display: grid;

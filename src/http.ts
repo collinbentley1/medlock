@@ -59,10 +59,6 @@ export function shouldRedirectToCanonical(request: Request, config: RuntimeConfi
   const host = hostNameFromHeader(request.headers.get("host")) || url.hostname.toLowerCase();
   const canonicalHost = config.canonicalHost.toLowerCase();
 
-  if (url.pathname === "/healthz") {
-    return undefined;
-  }
-
   if (host === canonicalHost) {
     return undefined;
   }

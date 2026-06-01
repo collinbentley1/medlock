@@ -1,9 +1,6 @@
 const form = document.querySelector<HTMLFormElement>("[data-waitlist-form]");
 const emailInput = document.querySelector<HTMLInputElement>("[data-waitlist-email]");
 const statusText = document.querySelector<HTMLElement>("[data-waitlist-status]");
-const endpointStatus = document.querySelector<HTMLElement>("[data-endpoint-status]");
-
-void refreshEndpointStatus();
 
 form?.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -39,23 +36,6 @@ form?.addEventListener("submit", async (event) => {
     setStatus("Unable to join right now.", "error");
   }
 });
-
-async function refreshEndpointStatus(): Promise<void> {
-  if (!endpointStatus) {
-    return;
-  }
-
-  try {
-    const response = await fetch("/api/healthz");
-    const body = (await response.json()) as { ok?: boolean; transport?: string };
-
-    endpointStatus.textContent = body.ok ? `Online: ${body.transport ?? "streamable-http"}` : "Unavailable";
-    endpointStatus.dataset.state = body.ok ? "online" : "offline";
-  } catch {
-    endpointStatus.textContent = "Unavailable";
-    endpointStatus.dataset.state = "offline";
-  }
-}
 
 function setStatus(message: string, state: "error" | "pending" | "success"): void {
   if (!statusText) {

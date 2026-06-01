@@ -38,15 +38,6 @@ export function createHandler(dependencies: ServerDependencies = {}): (request: 
     const url = new URL(request.url);
 
     try {
-      if (url.pathname === "/healthz" || url.pathname === "/api/healthz") {
-        return json({
-          ok: true,
-          service: "medlock",
-          transport: "streamable-http",
-          version: config.version,
-        });
-      }
-
       if (url.pathname === "/api/waitlist") {
         return handleWaitlist(request, config, waitlistStore, rateLimiter, now);
       }

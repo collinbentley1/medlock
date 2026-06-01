@@ -27,7 +27,7 @@ variable "allowed_origins" {
 }
 
 variable "app_version" {
-  description = "Version value exposed by /healthz."
+  description = "Application version value passed to the runtime."
   type        = string
   default     = "0.2.0"
 }
